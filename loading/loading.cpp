@@ -23,6 +23,7 @@ namespace Ani {
 		float m_duration;
 		float m_delta;
 		float m_delay = 0;
+		float m_mathing;
 		bool wait = false;
 	public:
 		bool active = true;
@@ -39,7 +40,13 @@ namespace Ani {
 			m_param = param;
 			SWITCH (numOfAnimation) {
 			CASE("rotate")://rotation
-				speed = param / duration;
+				if (delay > 0) {
+					wait = true;
+				}
+				else {
+					speed = param / duration;
+					m_mathing = object->getRotation() + m_param;
+				}				
 				break;
 			CASE("opacity"): //opacity
 				//Отложенный рассчет скорости
@@ -48,6 +55,7 @@ namespace Ani {
 				}
 				else {
 					speed = (param - int(object->getColor().a)) / duration;
+					m_mathing = param;
 				}
 				break;
 			CASE("left"):
@@ -62,6 +70,7 @@ namespace Ani {
 				}
 				else {
 					speed = (param - object->getScale().x) / duration;
+					m_mathing = param;
 					break;
 				}
 			}
@@ -74,6 +83,7 @@ namespace Ani {
 			if (wait && m_delay == 0) {
 				wait = false;
 				speed = Animation(m_obj, m_numOfAnimation, m_param, m_duration, 0).speed;
+				m_mathing = Animation(m_obj, m_numOfAnimation, m_param, m_duration, 0).m_mathing;
 			}
 
 			if (m_delay == 0) {
@@ -86,6 +96,7 @@ namespace Ani {
 					if (wait && m_delay == 0) {
 						wait = false;
 						speed = Animation(m_obj, m_numOfAnimation, m_param, m_duration, 0).speed;
+						m_mathing = Animation(m_obj, m_numOfAnimation, m_param, m_duration, 0).m_mathing;
 					}
 					update();
 				}
@@ -96,57 +107,65 @@ namespace Ani {
 		}
 
 		void update() {
+			bool end = false;
 			if (m_duration < m_delta) {
 				m_duration = 0;
 				m_delta -= m_duration;
+				end = true;
 			}
 			else {
 				m_duration -= m_delta;
 			}
-			SWITCH(m_numOfAnimation) {
-				CASE("rotate"):
-					rotate();
-					break;
-				CASE("opacity"):
-					opacity();
-					break;
-				CASE("left"):
-					left();
-					break;
-				CASE("top") :
-					top();
-					break;
-				CASE("right") :
-					right();
-					break;
-				CASE("bottom") :
-					bottom();
-					break;
-				CASE("zoom") :
-					zoom();
-					break;
-			}
 			if (m_duration == 0) {
 				active = false;
+				end = true;
+			}
+			SWITCH(m_numOfAnimation) {
+				CASE("rotate"):
+					rotate(end);
+					break;
+				CASE("opacity"):
+					opacity(end);
+					break;
+				CASE("left"):
+					left(end);
+					break;
+				CASE("top") :
+					top(end);
+					break;
+				CASE("right") :
+					right(end);
+					break;
+				CASE("bottom") :
+					bottom(end);
+					break;
+				CASE("zoom") :
+					zoom(end);
+					break;
 			}
 		}
 
-		void rotate() {
-			m_obj->rotate(speed * m_delta);
+		void rotate(bool end) {
+			if (end) {
+				m_obj->setRotation(m_mathing);
+			}
+			else {
+				m_obj->rotate(speed * m_delta);
+			}
 		}
-		void left() {
+		void left(bool end) {
 			m_obj->move(speed * m_delta * Vector2f(1, 0));
 		}
-		void right() {
+		void right(bool end) {
 			m_obj->move(speed * m_delta * Vector2f(-1, 0));
 		}
-		void top() {
+		void top(bool end) {
 			m_obj->move(speed * m_delta * Vector2f(0, 1));
 		}
-		void bottom() {
+		void bottom(bool end) {
 			m_obj->move(speed * m_delta * Vector2f(0, -1));
 		}
-		void opacity() {
+		void opacity(bool end) {
 			float newAlpha = int(m_obj->getColor().a) + speed * m_delta;
 			//cout << speed << "alpha: "<< newAlpha << '\n';
 			if (newAlpha < 0) {
@@ -155,9 +174,15 @@ namespace Ani {
 			else if (newAlpha > 255) {
 				newAlpha = 255;
 			}
-			m_obj->setColor(Color(m_obj->getColor().r, m_obj->getColor().g, m_obj->getColor().b, sf::Uint8(newAlpha)));
+			//cout << m_mathing;
+			if (end) {
+				m_obj->setColor(Color(m_obj->getColor().r, m_obj->getColor().g, m_obj->getColor().b, sf::Uint8(m_mathing)));
+			}
+			else {
+				m_obj->setColor(Color(m_obj->getColor().r, m_obj->getColor().g, m_obj->getColor().b, sf::Uint8(newAlpha)));
+			}
 		}
-		void zoom() {
+		void zoom(bool end) {
 			Vector2f newZoom = m_obj->getScale() + Vector2f(speed * m_delta, speed * m_delta);
 			m_obj->setScale(newZoom);
 		}
@@ -253,10 +278,14 @@ public:
 		while (iterator != textObjects.end()) {
 			//animations.add(&(*iterator), "zoom", 0.1, 50, 0 + i * delay);
 			//animations.add(&(*iterator), "zoom", 1, 50, 51 + i * delay);
+			
 			animations.add(&(*iterator), "left", 100.f, 1000, 0 + i * delay);
 			animations.add(&(*iterator), "top", 100.f, 1000, 1000 + i * delay);
 			animations.add(&(*iterator), "right", 100.f, 2500, 2000 + i * delay);
 			animations.add(&(*iterator), "bottom", 100.f, 5000, 4500 + i * delay);
+			animations.add(&(*iterator), "rotate", -200.f, 350, 0 + i * delay);
+			animations.add(&(*iterator), "rotate", 200.f, 500, 350 + i * delay);
+			animations.add(&(*iterator), "rotate", -360.f, 500, 850 + i * delay);
 			animations.add(&(*iterator), "rotate", 360.f, 3000, 2000 + i * delay);
 			animations.add(&(*iterator), "rotate", -360.f, 3000, 9000 + i * delay);
 			animations.add(&(*iterator), "opacity", 50, 1000, 2000 + i * delay);
