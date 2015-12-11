@@ -11,9 +11,10 @@ using namespace std;
 
 
 namespace Ani {
+	template < typename Object >
 	class Animation {
 	private:
-		Text * m_obj;
+		Object * m_obj;
 		float speed = 0;
 
 		string m_numOfAnimation;
@@ -25,44 +26,63 @@ namespace Ani {
 		bool wait = false;
 	public:
 		bool active = true;
+	private:
 
-		Animation(Text * object, string numOfAnimation, float param, float duration, float delay) {
+		template<typename T>
+		Color getColor(T * object) {
+			return object->getFillColor();
+		}
+
+		Color getColor(Text * object) {
+			return object->getColor();
+		}
+
+		template<typename T>
+		void setColor(T * object, Color color) {
+			object->setFillColor(color);
+		}
+
+		void setColor(Text * object, Color color) {
+			object->setColor(color);
+		}
+	public:
+		Animation(Object * object, string numOfAnimation, float param, float duration, float delay) {
 			m_obj = object;
 			m_numOfAnimation = numOfAnimation;
 			m_duration = duration;
 			m_delay = delay;
 			m_param = param;
-			SWITCH (numOfAnimation) {
-			CASE("rotate"):
-				if (delay > 0) {
-					wait = true;
-				}
-				else {
-					speed = param / duration;
+			if (delay > 0) {
+				wait = true;
+			}
+			else {
+				SWITCH(numOfAnimation) {
+					CASE("rotate") :
+						speed = param / duration;
 					m_mathing = object->getRotation() + m_param;
-				}				
-				break;
-			CASE("opacity"): 
-				if (delay > 0) {
-					wait = true;
-				}
-				else {
-					speed = (param - int(object->getColor().a)) / duration;
+					break;
+					CASE("opacity") :
+						speed = (param - int(getColor(object).a)) / duration;
 					m_mathing = param;
-				}
-				break;
-			CASE("left"):
-			CASE("top"):
-			CASE("right"):
-			CASE("bottom"):
-				speed = param / duration;
-				break;
-			CASE("zoom") :
-				if (delay > 0) {
-					wait = true;
-				}
-				else {
-					speed = (param - object->getScale().x) / duration;
+					break;
+					CASE("left") :
+						speed = param / duration;
+					m_mathing = object->getPosition().x + param;
+					break;
+					CASE("top") :
+						speed = param / duration;
+					m_mathing = object->getPosition().y + param;
+					break;
+					CASE("right") :
+						speed = param / duration;
+					m_mathing = object->getPosition().x - param;
+					break;
+					CASE("bottom") :
+						speed = param / duration;
+					m_mathing = object->getPosition().y - param;
+					break;
+					CASE("zoom") :
+						speed = (param - object->getScale().x) / duration;
 					m_mathing = param;
 					break;
 				}
@@ -114,27 +134,27 @@ namespace Ani {
 				end = true;
 			}
 			SWITCH(m_numOfAnimation) {
-				CASE("rotate"):
+				CASE("rotate") :
 					rotate(end);
-					break;
-				CASE("opacity"):
+				break;
+				CASE("opacity") :
 					opacity(end);
-					break;
-				CASE("left"):
+				break;
+				CASE("left") :
 					left(end);
-					break;
+				break;
 				CASE("top") :
 					top(end);
-					break;
+				break;
 				CASE("right") :
 					right(end);
-					break;
+				break;
 				CASE("bottom") :
 					bottom(end);
-					break;
+				break;
 				CASE("zoom") :
 					zoom(end);
-					break;
+				break;
 			}
 		}
 
@@ -147,32 +167,57 @@ namespace Ani {
 			}
 		}
 		void left(bool end) {
-			m_obj->move(speed * m_delta * Vector2f(1, 0));
+			if (end) {
+				m_obj->setPosition(Vector2f(m_mathing, m_obj->getPosition().y));
+			}
+			else {
+				m_obj->move(speed * m_delta * Vector2f(1, 0));
+			}
 		}
 		void right(bool end) {
-			m_obj->move(speed * m_delta * Vector2f(-1, 0));
+			if (end) {
+				m_obj->setPosition(Vector2f(m_mathing, m_obj->getPosition().y));
+			}
+			else {
+				m_obj->move(speed * m_delta * Vector2f(-1, 0));
+			}
 		}
 		void top(bool end) {
-			m_obj->move(speed * m_delta * Vector2f(0, 1));
+			if (end) {
+				m_obj->setPosition(Vector2f(m_obj->getPosition().x, m_mathing));
+			}
+			else {
+				m_obj->move(speed * m_delta * Vector2f(0, 1));
+			}
 		}
 		void bottom(bool end) {
-			m_obj->move(speed * m_delta * Vector2f(0, -1));
+			if (end) {
+				m_obj->setPosition(Vector2f(m_obj->getPosition().x, m_mathing));
+			}
+			else {
+				m_obj->move(speed * m_delta * Vector2f(0, -1));
+			}
 		}
+
 		void opacity(bool end) {
-			float newAlpha = int(m_obj->getColor().a) + speed * m_delta;
+			float newAlpha = int(getColor(m_obj).a) + speed * m_delta;
 			if (newAlpha < 0) {
 				newAlpha = 0;
 			}
 			else if (newAlpha > 255) {
 				newAlpha = 255;
 			}
+
 			if (end) {
-				m_obj->setColor(Color(m_obj->getColor().r, m_obj->getColor().g, m_obj->getColor().b, sf::Uint8(m_mathing)));
+				setColor(m_obj, Color(getColor(m_obj).r, getColor(m_obj).g, getColor(m_obj).b, sf::Uint8(m_mathing)));
+				//m_obj->setColor(Color(getColor(m_obj).r, getColor(m_obj).g, getColor(m_obj).b, sf::Uint8(m_mathing)));
 			}
 			else {
-				m_obj->setColor(Color(m_obj->getColor().r, m_obj->getColor().g, m_obj->getColor().b, sf::Uint8(newAlpha)));
+				setColor(m_obj, Color(getColor(m_obj).r, getColor(m_obj).g, getColor(m_obj).b, sf::Uint8(newAlpha)));
+				//m_obj->setColor(Color(getColor(m_obj).r, getColor(m_obj).g, getColor(m_obj).b, sf::Uint8(newAlpha)));
 			}
 		}
+
 		void zoom(bool end) {
 			if (end) {
 				m_obj->setScale(Vector2f(m_mathing, m_mathing));
@@ -184,17 +229,18 @@ namespace Ani {
 		}
 	};
 
+	template < typename T >
 	class Animations {
 	public:
-		list<Animation> stack;
+		list<Animation < T > > stack;
 
-		void add(Text * object, string numOfAnimation, float param, float duration, float delay) {
-			Animation buffer(object, numOfAnimation, param, duration, delay);
+		void add(T * object, string numOfAnimation, float param, float duration, float delay) {
+			Animation < T > buffer(object, numOfAnimation, param, duration, delay);
 			stack.push_back(buffer);
 		}
 
 		bool play(float delta) {
-			list<Animation>::iterator it;
+			list<Animation < T > >::iterator it;
 			it = stack.begin();
 			while (it != stack.end()) {
 				(*it).play(delta);
@@ -215,11 +261,12 @@ namespace Ani {
 	};
 }
 
+
 class Loading {
 private:
 	Font * font;
 	vector<Text> textObjects;
-	Ani::Animations animations;
+	Ani::Animations<Text> animations;
 public:
 	string m_text;
 
@@ -276,10 +323,10 @@ public:
 			animations.add(&(*iterator), "zoom", 0.1f, 500, i * delay);
 			animations.add(&(*iterator), "zoom", 1, 500, 500 + i * delay);
 			
-			animations.add(&(*iterator), "left", 100.f, 1000, 0 + i * delay);
-			animations.add(&(*iterator), "top", 100.f, 1000, 1000 + i * delay);
-			animations.add(&(*iterator), "right", 100.f, 2500, 2000 + i * delay);
-			animations.add(&(*iterator), "bottom", 100.f, 5000, 4500 + i * delay);
+			animations.add(&(*iterator), "left", 300.f, 1000, 0 + i * delay);
+			animations.add(&(*iterator), "top", 300.f, 1000, 1000 + i * delay);
+			animations.add(&(*iterator), "right", 300.f, 2500, 2000 + i * delay);
+			animations.add(&(*iterator), "bottom", 300.f, 5000, 4500 + i * delay);
 			animations.add(&(*iterator), "rotate", -200.f, 350, 0 + i * delay);
 			animations.add(&(*iterator), "rotate", 200.f, 500, 350 + i * delay);
 			animations.add(&(*iterator), "rotate", -360.f, 500, 850 + i * delay);
