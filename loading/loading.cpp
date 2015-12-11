@@ -223,14 +223,14 @@ private:
 public:
 	string m_text;
 
-	Loading(string text) {
+	Loading(string text, Vector2f position) {
 		font = new Font;
 		if (!font->loadFromFile("Helvetica.otf"))
 		{
-			printf("error with font");
+			cout << "error with loading font";
 		}
 		m_text = text;
-		makeTextObjects();
+		makeTextObjects(position);
 		addAnimations();
 	}
 
@@ -251,28 +251,29 @@ public:
 		return animations.play(delta);
 	}
 private:
-	void makeTextObjects() {
+	void makeTextObjects(Vector2f position) {
 		textObjects.reserve(m_text.length());
 		Text buffer;
 		buffer.setColor(Color(0, 0, 0));
 		buffer.setFont(*font);
-		float left = 200;
-		static const int CHAR_SHIFT = 4;
-		for (int i = 0; i < m_text.length(); i++) {
+		float left = position.x;
+		float top = position.y;
+		static const int CHAR_SHIFT = 4; //Сдвиг букв относительно друг-друга
+		for (unsigned int i = 0; i < m_text.length(); i++) {
 			buffer.setString(m_text[i]);
-			buffer.setPosition(left, 200);
+			buffer.setPosition(left, top);
 			textObjects.push_back(buffer);
 			left += buffer.getGlobalBounds().width + CHAR_SHIFT;
 		}
 	}
 public:
 	void addAnimations() {
-		float delay = 200;
+		float delay = 200; //Задержка анимации каждой буквы
 		int i = m_text.length();
 		vector<Text>::iterator iterator;
 		iterator = textObjects.begin();
 		while (iterator != textObjects.end()) {
-			animations.add(&(*iterator), "zoom", 0.1, 500, 0 + i * delay);
+			animations.add(&(*iterator), "zoom", 0.1f, 500, i * delay);
 			animations.add(&(*iterator), "zoom", 1, 500, 500 + i * delay);
 			
 			animations.add(&(*iterator), "left", 100.f, 1000, 0 + i * delay);
@@ -306,12 +307,12 @@ int main()
 	RenderWindow window(vidMode, "First iteration", Style::Default, settings);
 	window.setVerticalSyncEnabled(true);
 
-	Loading loading("loading...");
+	Loading loading("loading...", Vector2f(300, 200));
 
 	Clock clock;
 	float time;
 	while (window.isOpen()) {
-		window.clear(Color(255, 255, 255));
+		window.clear(Color::White);
 		time = float(clock.getElapsedTime().asMilliseconds());
 		clock.restart();
 		if (loading.animate(time)) {

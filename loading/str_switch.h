@@ -45,7 +45,7 @@ namespace s_s
 
 	inline ullong str_hash_for_switch(const std::string& str)
 	{
-		return (str_is_correct(str.c_str()) && (str.length() <= MAX_LEN)) ? str_hash(str.c_str(), str.length()) : N_HASH;
+		return (str_is_correct(str.c_str()) && (float(str.length()) <= float(MAX_LEN))) ? str_hash(str.c_str(), uchar(str.length())) : N_HASH;
 	}
 }
 
