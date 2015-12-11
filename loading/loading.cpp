@@ -13,8 +13,6 @@ using namespace std;
 namespace Ani {
 	class Animation {
 	private:
-		//template<class T>
-		//T * m_obj;
 		Text * m_obj;
 		float speed = 0;
 
@@ -28,18 +26,14 @@ namespace Ani {
 	public:
 		bool active = true;
 
-		//template<class T>
 		Animation(Text * object, string numOfAnimation, float param, float duration, float delay) {
 			m_obj = object;
-			//rotate
-			//left
-			//opacity
 			m_numOfAnimation = numOfAnimation;
 			m_duration = duration;
 			m_delay = delay;
 			m_param = param;
 			SWITCH (numOfAnimation) {
-			CASE("rotate")://rotation
+			CASE("rotate"):
 				if (delay > 0) {
 					wait = true;
 				}
@@ -48,8 +42,7 @@ namespace Ani {
 					m_mathing = object->getRotation() + m_param;
 				}				
 				break;
-			CASE("opacity"): //opacity
-				//Отложенный рассчет скорости
+			CASE("opacity"): 
 				if (delay > 0) {
 					wait = true;
 				}
@@ -89,7 +82,7 @@ namespace Ani {
 			if (m_delay == 0) {
 				update();
 			}
-			else {//Если запуск анимации отложен
+			else {
 				if (delta > m_delay) {
 					delta -= m_delay;
 					m_delay = 0;
@@ -167,14 +160,12 @@ namespace Ani {
 		}
 		void opacity(bool end) {
 			float newAlpha = int(m_obj->getColor().a) + speed * m_delta;
-			//cout << speed << "alpha: "<< newAlpha << '\n';
 			if (newAlpha < 0) {
 				newAlpha = 0;
 			}
 			else if (newAlpha > 255) {
 				newAlpha = 255;
 			}
-			//cout << m_mathing;
 			if (end) {
 				m_obj->setColor(Color(m_obj->getColor().r, m_obj->getColor().g, m_obj->getColor().b, sf::Uint8(m_mathing)));
 			}
@@ -183,8 +174,13 @@ namespace Ani {
 			}
 		}
 		void zoom(bool end) {
-			Vector2f newZoom = m_obj->getScale() + Vector2f(speed * m_delta, speed * m_delta);
-			m_obj->setScale(newZoom);
+			if (end) {
+				m_obj->setScale(Vector2f(m_mathing, m_mathing));
+			}
+			else {
+				Vector2f newZoom = m_obj->getScale() + Vector2f(speed * m_delta, speed * m_delta);
+				m_obj->setScale(newZoom);
+			}
 		}
 	};
 
@@ -276,8 +272,8 @@ public:
 		vector<Text>::iterator iterator;
 		iterator = textObjects.begin();
 		while (iterator != textObjects.end()) {
-			//animations.add(&(*iterator), "zoom", 0.1, 50, 0 + i * delay);
-			//animations.add(&(*iterator), "zoom", 1, 50, 51 + i * delay);
+			animations.add(&(*iterator), "zoom", 0.1, 500, 0 + i * delay);
+			animations.add(&(*iterator), "zoom", 1, 500, 500 + i * delay);
 			
 			animations.add(&(*iterator), "left", 100.f, 1000, 0 + i * delay);
 			animations.add(&(*iterator), "top", 100.f, 1000, 1000 + i * delay);
@@ -292,6 +288,7 @@ public:
 			animations.add(&(*iterator), "opacity", 250, 1000, 3000 + i * delay);
 			animations.add(&(*iterator), "opacity", 0, 1000, 9500 + i * delay);
 			animations.add(&(*iterator), "opacity", 255, 1000, 11000 + i * delay);
+			
 			iterator++;
 			i--;
 		}
@@ -323,7 +320,6 @@ int main()
 		loading.draw(window);
 		window.display();
 	}
-	system("pause");
     return 0;
 }
 
